@@ -1,7 +1,7 @@
 import { Entity, EntityProperty, MikroORM, Platform, PrimaryKey, PrimaryKeyProp, Property, Type, ValidationError } from '@mikro-orm/postgresql';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 
-// Latest from v5.x branch, but replaced toISOString with explicit formatter
+// Latest from v5.x branch, but using date-fns functions to format/parse
 class DateType extends Type<Date, string> {
 
   convertToDatabaseValue(value: Date | string | undefined | null, platform: Platform): string {
@@ -21,7 +21,7 @@ class DateType extends Type<Date, string> {
       return value as Date;
     }
 
-    const date = new Date(value);
+    const date = parseISO(value);
 
     if (date.toString() === 'Invalid Date') {
       throw ValidationError.invalidType(DateType, value, 'database');
@@ -84,6 +84,8 @@ afterAll(async () => {
 });
 
 test('basic CRUD example', async () => {
+  // It is essential that local time zone is set to UTC+ when running this.
+  // My tests were UTC+3 (Europe/Riga)
   const date = new Date(2024, 5, 19)
   const id = 123
 
@@ -99,6 +101,7 @@ test('basic CRUD example', async () => {
 
   user.name = 'Bar';
   // However here the SET par does get formatted via DateType, but WHERE condition does not
+  // Also, it is trying to update `date` seemingly unnecessarily
   // update "user" set "date" = '2024-06-19', "name" = 'Bar' where "id" = 123 and "date" = '2024-06-18T21:00:00.000Z'
   await orm.em.flush();
   orm.em.clear();

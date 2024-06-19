@@ -100,6 +100,7 @@ test('basic CRUD example', async () => {
 
   user.name = 'Bar';
   // The JS date got read as 2024-06-18 00:00:00, assumed to be in local zone, then converted to UTC
+  // Also, it is trying to update `date` seemingly unnecessarily
   // update "user" set "date" = '2024-06-17', "name" = 'Bar' where "id" = 123 and "date" = '2024-06-17T21:00:00.000Z'
   await orm.em.flush();
   orm.em.clear();
